@@ -304,7 +304,7 @@
         // search raw string to change [$] into $, etc.
         BigSmilesStr = correctBondDesc(BigSmilesStr);
         // substitute the stochastic objects
-        var patt = /\[Z\:?[0-9]*\]/g;
+        var patt = /\[Z\:?[0-9]*\]/ig;
         BigSmilesStr = matchAndReplace(patt,BigSmilesStr,function(x,match){
           return getStoObjStr(localDivElement.children(".StoObj").eq(x-1));
         });
