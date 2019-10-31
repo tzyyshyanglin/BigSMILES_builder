@@ -333,7 +333,7 @@
           var idx;
           for(var i=0;i<nAtom;i++) {
             idx = 2 + i*3;
-            var patt = /[0-9a-z$\(\)\@]+\:([0-9]+)/ig;
+            var patt = /[0-9a-z$\+\-\(\)\@]+\:([0-9]+)/ig;
             if(patt.test(arr[idx])) {
               // if match found, no need to update
             } else {
@@ -666,7 +666,9 @@
         BigSmilesStr = BigSmilesStr.replace(patt,'$2');
         patt = RegExp(bondDescPatt.source,bondDescPatt.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
-        patt = /\[(C@*H*):?([0-9]*)\]/g
+        patt = /\[(C@*H*):?([0-9]*)\]/ig
+        BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
+        patt = /\[([a-y0-9\+\-\@]+):?[0-9]*\]/ig
         BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
         patt = /\[([\(](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/g
         BigSmilesStr = BigSmilesStr.replace(patt,'[<$2]');
