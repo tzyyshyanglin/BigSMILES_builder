@@ -18,7 +18,7 @@
       // initialize JSME editor with styrene repeat unit
       //var startingStructure = "10 10 $ 10.30 -8.40 C 11.52 -7.70 C 12.73 -8.40 $ 13.94 -7.70 C 12.73 -9.80 C 11.52 -10.50 C 11.52 -11.90 C 12.73 -12.60 C 13.94 -11.90 C 13.94 -10.50 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2";
     	//var startingStructure = "11 11 $ 8.61 -4.45 Z 9.83 -3.75 C 11.04 -4.45 (1 12.26 -3.75 C 11.04 -5.85 C 9.83 -6.55 C 9.83 -7.94 C 11.04 -8.64 C 12.26 -7.94 C 12.26 -6.55 )2 12.25 -5.15 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2 3 11 1";
-      var startingStructure = "7 6 C 4.44 -3.32 C 5.25 -3.79 C 5.25 -5.19 C 6.46 -5.89 Z 7.68 -5.19 C 8.89 -5.89 C 10.10 -5.19 1 2 1 2 3 1 3 4 1 4 5 1 5 6 1 6 7 1";
+      var startingStructure = "7 6 C 4.44 -3.32 C 5.25 -3.79 C 5.25 -5.19 C 6.46 -5.89 {Z} 7.68 -5.19 C 8.89 -5.89 C 10.10 -5.19 1 2 1 2 3 1 3 4 1 4 5 1 5 6 1 6 7 1";
     	//Instantiate a new JSME:
     	//arguments: HTML id, width, height (must be string not number!)
      	jsmeApplet = new JSApplet.JSME("appletContainer", "600px", "440px", {
@@ -193,7 +193,7 @@
 
     <script>
       var jsmeApplet2;
-      var stoObjPatt = /(\[Z\:?([0-9]*)\])/ig;
+      var stoObjPatt = /(\[\{Z\}\:?([0-9]*)\])/ig;
       var smilesCharPatt = /(\[(Cl|Br|[BCNOSPFIcbnosp])H?[0-9]?:?([0-9]*)\])/ig;
       //var bondDesc = /\[([$<>][\-\=\/\\\#\:]?(\%[0-9][0-9]|[0-9])?)(\:[0-9]+)?\]/g;
       var bondDescPatt = /\[([$\(\)](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/g;
@@ -333,7 +333,7 @@
           var idx;
           for(var i=0;i<nAtom;i++) {
             idx = 2 + i*3;
-            var patt = /[0-9a-z$\+\-\(\)\@]+\:([0-9]+)/ig;
+            var patt = /[0-9a-z$\+\-\{\}\(\)\@]+\:([0-9]+)/ig;
             if(patt.test(arr[idx])) {
               // if match found, no need to update
             } else {
@@ -501,7 +501,7 @@
 
         // remove all deprecated objects from the DOM tree
         var match, newIdx, newElement, stoObjIdx;
-        var patt = /(\[Z\:([0-9]+)\])/ig;
+        var patt = /(\[\{Z\}\:([0-9]+)\])/ig;
         var allArr=[],existArr = [];
         // collect all StoObj
         var children=divElement.children('.StoObj');
@@ -544,7 +544,7 @@
         //
 
         // add new StoObj to the DOM tree
-        var patt2 = /(\[Z:([0-9]+)\])/ig;
+        var patt2 = /(\[\{Z\}:([0-9]+)\])/ig;
         //var newStoObjCount = ;
         while(match = patt2.exec(smilesNumStr) ) {
           stoObjIdx = parseInt(match[2]);
@@ -684,7 +684,7 @@
         });
         return BigSmilesStr;
       }
-
+/*
       function cleanBigSmilesStr(BigSmilesStr){
         var spanPatt = /\<\/?span( class\=\"[a-zA-Z0-9]*\")?\>/g;
         BigSmilesStr = matchAndReplace(spanPatt,BigSmilesStr,function(x,match){
@@ -692,7 +692,7 @@
         });
         return BigSmilesStr;
       }
-
+*/
       function getBigSmilesObjStr(localDivElement,isNum=false,useNumbered=true) {
         //var localDivElement = element;
         var BigSmilesStr;
@@ -705,10 +705,10 @@
           } else {
             BigSmilesStr = localDivElement.children(".PolymerSMILES").html();
           }
-          var pattAtom = /\[([a-z0-9$\(\)]+)\:?([0-9\-\/]*)\]/ig;
+          var pattAtom = /\[([a-z0-9$\{\}\(\)]+)\:?([0-9\-\/]*)\]/ig;
           var address = localDivElement.children(".title").children(".address").html();
           BigSmilesStr = BigSmilesStr.replace(pattAtom,"[$1:"+address+"$2]");
-          var patt = /(\[Z\:?([0-9\-\/]*)\])/ig;
+          var patt = /(\[\{Z\}\:?([0-9\-\/]*)\])/ig;
         }
 
         // search raw string to change [$] into $, etc.
