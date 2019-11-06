@@ -73,6 +73,8 @@
       .hiddenCount {display:none;}
       .EndGroup {border:1px red none;display:block;margin:10px;margin-top:20px;}
 
+      .StoObjName {margin-left:30px;font-size: 0.7em;position:relative;top: -0.15em;}
+
       .DescText {margin-left: 10px;}
       .DescText input {margin-left: 0px;margin-right:5px;}
       .leftEnd {display: none;}
@@ -142,7 +144,7 @@
       </div>
 
       <div id="StoObjTemplate" class="StoObj">
-        <h2 class="title">Stochastic Object: <span class="address">1</span></h2>
+        <h2 class="title">Stochastic Object: <span class="address">1</span><span class="StoObjName">1</span></h2>
         <span class="DescText">Bond Descriptors:
           Left: <input type="text" size=4 class="leftDesc" />
           Right: <input type="text" size=4 class="rightDesc" />
@@ -194,8 +196,8 @@
     <script>
       var jsmeApplet2;
       // regex patterns used
-      var stoObjWidx = /(\[\{Z\}\:?([0-9]*)\])/ig;
-      var stoObjWaddress = /(\[\{Z\}\:?([0-9\.\/]*)\])/ig;
+      var stoObjWidx = /(\[\{[a-z0-9]+\}\:?([0-9]*)\])/ig;
+      var stoObjWaddress = /(\[\{[a-z0-9]+\}\:?([0-9\.\/]*)\])/ig;
       var smilesCharPatt = /(\[(Cl|Br|[BCNOSPFIcbnosp])H?[0-9]?:?([0-9]*)\])/ig;
       var anyAtomWaddress = /\[([a-z0-9$\+\-\@\{\}\(\)]+)\:?([0-9\.\/]*)\]/ig;
       var anyJMEatomWidx = /[0-9a-z$\+\-\{\}\(\)\@]+\:([0-9]+)/ig;
@@ -272,7 +274,7 @@
         // automatically generate child stochastic objects
         var stoObjCount = 0;
         var match, newIdx, newElement, stoObjIdx;
-        var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
+        var patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
         while(match = patt.exec(smilesNumStr) ) {
           stoObjCount++;
           newElement = $("#StoObjTemplate").clone();
@@ -282,6 +284,7 @@
           stoObjIdx = match[2];
           newIdx = divElement.find(".address").html() + stoObjIdx;
           newElement.find(".address").html(newIdx);
+          newElement.find(".StoObjName").html(match[0]);
 /*
           // check if StoObj is on left terminal
           if(match.index == 0) {
@@ -342,13 +345,33 @@
         arrs = jmeStr.split("|");
         var atomCount=startN;
         var arr;
+        // first pass, get largest existing label
         for(var j=0;j<arrs.length;j++) {
           arr = arrs[j].split(" ");
           var nAtom = parseInt(arr[0]);
           var idx;
           for(var i=0;i<nAtom;i++) {
             idx = 2 + i*3;
-            var patt = RegExp(anyJMEatomWidx.source,anyJMEatomWidx.flags);
+            var patt = new RegExp(anyJMEatomWidx.source,anyJMEatomWidx.flags);
+            if(patt.test(arr[idx])) {
+              patt = new RegExp(anyJMEatomWidx.source,anyJMEatomWidx.flags);
+              var match = patt.exec(arr[idx]);
+              if (parseInt(match[1])>atomCount) {
+                atomCount = parseInt(match[1]);
+              }
+            } else {
+              // no label
+            }
+          }
+        }
+        // second pass, assign labels to unlabelled atoms
+        for(var j=0;j<arrs.length;j++) {
+          arr = arrs[j].split(" ");
+          var nAtom = parseInt(arr[0]);
+          var idx;
+          for(var i=0;i<nAtom;i++) {
+            idx = 2 + i*3;
+            var patt = new RegExp(anyJMEatomWidx.source,anyJMEatomWidx.flags);
             if(patt.test(arr[idx])) {
               // if match found, no need to update
             } else {
@@ -525,8 +548,7 @@
 
         // get StoObj that are still present
         var smilesNumStr = jsmeApplet2.smiles();
-        //var patt = /(\[\{Z\}\:([0-9]+)\])/ig;
-        var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
+        var patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
         while(match = patt.exec(smilesNumStr) ) {
           stoObjIdx = match[2];
           var matchIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
@@ -547,7 +569,7 @@
         }
 
         var jmeStr = jsmeApplet2.jmeFile();
-        jmeNumStr = numberNewAtoms(jmeStr,nAtomOrig)
+        jmeNumStr = numberNewAtoms(jmeStr,nAtomOrig);
         jsmeApplet2.readMolecule(jmeNumStr);
         var svgStr = jsmeApplet2.getMolecularAreaGraphicsString();
         var smilesNumStr = jsmeApplet2.smiles();
@@ -559,21 +581,28 @@
         //
 
         // add new StoObj to the DOM tree
-        //var patt2 = /(\[\{Z\}:([0-9]+)\])/ig;
-        var patt2 = RegExp(stoObjWidx.source,stoObjWidx.flags);
+        var patt2 = new RegExp(stoObjWidx.source,stoObjWidx.flags);
         //var newStoObjCount = ;
         while(match = patt2.exec(smilesNumStr) ) {
           stoObjIdx = parseInt(match[2]);
           if (stoObjIdx <= nAtomOrig) {
             continue;
           } else {
-            // create new element
-            newElement = $("#StoObjTemplate").clone();
-            newElement.css("display","block");
-            newIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
-            newElement.find(".address").html(newIdx);
-            modifyUnits(newElement);
-            newElement.appendTo(divElement);
+            var matchIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
+            if (existArr.includes(matchIdx)) {
+              // if the "new" element already exists, do nothing but rename
+              newElement = divElement.children(".StoObj").children(":contains('"+matchIdx+"')").parent();
+              newElement.find(".StoObjName").html(match[0]);
+            } else {
+              // create new element
+              newElement = $("#StoObjTemplate").clone();
+              newElement.css("display","block");
+              newIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
+              newElement.find(".address").html(newIdx);
+              newElement.find(".StoObjName").html(match[0]);
+              modifyUnits(newElement);
+              newElement.appendTo(divElement);
+            }
           }
         }
       }
@@ -641,8 +670,8 @@
       });
 
       function subParenToBrak(stringToShow,isNum) {
-        var pattL = RegExp(lBrakWaddress.source,lBrakWaddress.flags);
-        var pattR = RegExp(rBrakWaddress.source,rBrakWaddress.flags);
+        var pattL = new RegExp(lBrakWaddress.source,lBrakWaddress.flags);
+        var pattR = new RegExp(rBrakWaddress.source,rBrakWaddress.flags);
         if(!isNum) {
           stringToShow = stringToShow.replace(pattL,'[<$2]');
           stringToShow = stringToShow.replace(pattR,'[>$2]');
@@ -677,28 +706,26 @@
       }
 
       function highlightStoObj(BigSmilesStr){
-        var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
+        var patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'<span class="redSpan">$1</span>');
-        patt = RegExp(smilesCharPatt.source,smilesCharPatt.flags);
+        patt = new RegExp(smilesCharPatt.source,smilesCharPatt.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'$2');
-        patt = RegExp(bondDescPatt.source,bondDescPatt.flags);
+        patt = new RegExp(bondDescPatt.source,bondDescPatt.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
-        //patt = /\[(C@*H*):?([0-9]*)\]/ig
-        //BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
         // remove atom idx from smiles string
-        patt = RegExp(anyRegAtomWidx.source,anyRegAtomWidx.flags);
+        patt = new RegExp(anyRegAtomWidx.source,anyRegAtomWidx.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
         // replace ( with < to display corect bonding descriptor
-        patt = RegExp(lBrakWidx.source,lBrakWidx.flags);
+        patt = new RegExp(lBrakWidx.source,lBrakWidx.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[<$2]');
         // replace ) with > to display corect bonding descriptor
-        patt = RegExp(rBrakWidx.source,rBrakWidx.flags);
+        patt = new RegExp(rBrakWidx.source,rBrakWidx.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[>$2]');
         return BigSmilesStr;
       }
 
       function highlightStoObj2(BigSmilesStr){
-        var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
+        var patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
         BigSmilesStr = matchAndReplace(patt,BigSmilesStr,function(x,match){
           return '<span class="redSpan">' + match[0] + '</span>';
         });
@@ -719,18 +746,17 @@
         var patt;
         if(isNum == false) {
           BigSmilesStr = localDivElement.children(".PolymerSMILES").html();
-          //var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
-          patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
+          patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
         } else {
           if (useNumbered==true) {
             BigSmilesStr = localDivElement.children(".PolymerNumberedSMILES").html();
           } else {
             BigSmilesStr = localDivElement.children(".PolymerSMILES").html();
           }
-          var pattAtom = RegExp(anyAtomWaddress.source,anyAtomWaddress.flags);
+          var pattAtom = new RegExp(anyAtomWaddress.source,anyAtomWaddress.flags);
           var address = localDivElement.children(".title").children(".address").html();
           BigSmilesStr = BigSmilesStr.replace(pattAtom,"[$1:"+address+"$2]");
-          patt = RegExp(stoObjWaddress.source,stoObjWaddress.flags);
+          patt = new RegExp(stoObjWaddress.source,stoObjWaddress.flags);
         }
 
         // substitute the stochastic objects
