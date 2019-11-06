@@ -193,11 +193,26 @@
 
     <script>
       var jsmeApplet2;
-      var stoObjPatt = /(\[\{Z\}\:?([0-9]*)\])/ig;
+      // regex patterns used
+      var stoObjWidx = /(\[\{Z\}\:?([0-9]*)\])/ig;
+      var stoObjWaddress = /(\[\{Z\}\:?([0-9\.\/]*)\])/ig;
       var smilesCharPatt = /(\[(Cl|Br|[BCNOSPFIcbnosp])H?[0-9]?:?([0-9]*)\])/ig;
-      //var bondDesc = /\[([$<>][\-\=\/\\\#\:]?(\%[0-9][0-9]|[0-9])?)(\:[0-9]+)?\]/g;
-      var bondDescPatt = /\[([$\(\)](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/g;
+      var anyAtomWaddress = /\[([a-z0-9$\+\-\@\{\}\(\)]+)\:?([0-9\.\/]*)\]/ig;
+      var anyJMEatomWidx = /[0-9a-z$\+\-\{\}\(\)\@]+\:([0-9]+)/ig;
+      var anyRegAtomWidx = /\[([a-z0-9\+\-\@]+):?[0-9]*\]/ig;
+      var lBrakWaddress = /\[([\(](\%[0-9][0-9]|[0-9])?)(:?)([0-9\.\/]*)\]/ig;
+      var lBrakWidx = /\[([\(](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/ig;
+      var rBrakWaddress = /\[([\)](\%[0-9][0-9]|[0-9])?)(:?)([0-9\.\/]*)\]/ig;
+      var rBrakWidx = /\[([\)](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/ig;
+      //var bondDesc = /\[([$<>][\-\=\/\\\#\:]?(\%[0-9][0-9]|[0-9])?)(\:[0-9]+)?\]/ig;
+      var bondDescPatt = /\[([$\(\)](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/ig;
+
       var startingStructure = "10 10 $ 10.30 -8.40 Z 11.52 -7.70 C 12.73 -8.40 $ 13.94 -7.70 C 12.73 -9.80 C 11.52 -10.50 C 11.52 -11.90 C 12.73 -12.60 C 13.94 -11.90 C 13.94 -10.50 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2";
+
+      var folder_div = '/';
+      var repunit_div = '.';
+      var endgrp_div = '.E';
+
       // remove last repeat unit
       $( "#BigSMILEScontainer" ).on("click",'.delUnit',function( event ) {
         var divElement = $(this).parent();
@@ -218,10 +233,10 @@
         var unitIdx = parseInt(divElement.children(".count").html())+1;
         divElement.children(".count").html(String(unitIdx));
         if($(this).html() == "Add Repeat Unit") {
-          newIdx = divElement.parent().children().children(".address").html()+'-'+String(unitIdx)+'/';
+          newIdx = divElement.parent().children().children(".address").html()+repunit_div+String(unitIdx)+folder_div;
         }
         else {
-          newIdx = divElement.parent().children().children(".address").html()+'-E'+String(unitIdx)+'/';
+          newIdx = divElement.parent().children().children(".address").html()+endgrp_div+String(unitIdx)+folder_div;
         }
 
         newElement = $("#PolymerTemplate").clone();
@@ -257,7 +272,7 @@
         // automatically generate child stochastic objects
         var stoObjCount = 0;
         var match, newIdx, newElement, stoObjIdx;
-        var patt = RegExp(stoObjPatt.source,stoObjPatt.flags);
+        var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
         while(match = patt.exec(smilesNumStr) ) {
           stoObjCount++;
           newElement = $("#StoObjTemplate").clone();
@@ -333,7 +348,7 @@
           var idx;
           for(var i=0;i<nAtom;i++) {
             idx = 2 + i*3;
-            var patt = /[0-9a-z$\+\-\{\}\(\)\@]+\:([0-9]+)/ig;
+            var patt = RegExp(anyJMEatomWidx.source,anyJMEatomWidx.flags);
             if(patt.test(arr[idx])) {
               // if match found, no need to update
             } else {
@@ -498,10 +513,8 @@
           }
         }
 
-
         // remove all deprecated objects from the DOM tree
         var match, newIdx, newElement, stoObjIdx;
-        var patt = /(\[\{Z\}\:([0-9]+)\])/ig;
         var allArr=[],existArr = [];
         // collect all StoObj
         var children=divElement.children('.StoObj');
@@ -512,6 +525,8 @@
 
         // get StoObj that are still present
         var smilesNumStr = jsmeApplet2.smiles();
+        //var patt = /(\[\{Z\}\:([0-9]+)\])/ig;
+        var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
         while(match = patt.exec(smilesNumStr) ) {
           stoObjIdx = match[2];
           var matchIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
@@ -544,7 +559,8 @@
         //
 
         // add new StoObj to the DOM tree
-        var patt2 = /(\[\{Z\}:([0-9]+)\])/ig;
+        //var patt2 = /(\[\{Z\}:([0-9]+)\])/ig;
+        var patt2 = RegExp(stoObjWidx.source,stoObjWidx.flags);
         //var newStoObjCount = ;
         while(match = patt2.exec(smilesNumStr) ) {
           stoObjIdx = parseInt(match[2]);
@@ -556,6 +572,7 @@
             newElement.css("display","block");
             newIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
             newElement.find(".address").html(newIdx);
+            modifyUnits(newElement);
             newElement.appendTo(divElement);
           }
         }
@@ -592,10 +609,10 @@
         }
         divElement.children(".count").html(String(unitIdx));
         if($(this).html() == "Add Repeat Unit") {
-          newIdx = divElement.parent().children().children(".address").html()+'-'+String(unitIdx)+'/';
+          newIdx = divElement.parent().children().children(".address").html()+repunit_div+String(unitIdx)+folder_div;
         }
         else {
-          newIdx = divElement.parent().children().children(".address").html()+'-E'+String(unitIdx)+'/';
+          newIdx = divElement.parent().children().children(".address").html()+endgrp_div+String(unitIdx)+folder_div;
         }
 
         newElement = $("#PolymerTemplate").clone();
@@ -624,8 +641,8 @@
       });
 
       function subParenToBrak(stringToShow,isNum) {
-        var pattL = /\[([\(](\%[0-9][0-9]|[0-9])?)(:?)([0-9\-\/]*)\]/g
-        var pattR = /\[([\)](\%[0-9][0-9]|[0-9])?)(:?)([0-9\-\/]*)\]/g
+        var pattL = RegExp(lBrakWaddress.source,lBrakWaddress.flags);
+        var pattR = RegExp(rBrakWaddress.source,rBrakWaddress.flags);
         if(!isNum) {
           stringToShow = stringToShow.replace(pattL,'[<$2]');
           stringToShow = stringToShow.replace(pattR,'[>$2]');
@@ -660,25 +677,28 @@
       }
 
       function highlightStoObj(BigSmilesStr){
-        var patt = RegExp(stoObjPatt.source,stoObjPatt.flags);
+        var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'<span class="redSpan">$1</span>');
         patt = RegExp(smilesCharPatt.source,smilesCharPatt.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'$2');
         patt = RegExp(bondDescPatt.source,bondDescPatt.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
-        patt = /\[(C@*H*):?([0-9]*)\]/ig
+        //patt = /\[(C@*H*):?([0-9]*)\]/ig
+        //BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
+        // remove atom idx from smiles string
+        patt = RegExp(anyRegAtomWidx.source,anyRegAtomWidx.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
-        patt = /\[([a-y0-9\+\-\@]+):?[0-9]*\]/ig
-        BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
-        patt = /\[([\(](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/g
+        // replace ( with < to display corect bonding descriptor
+        patt = RegExp(lBrakWidx.source,lBrakWidx.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[<$2]');
-        patt = /\[([\)](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/g
+        // replace ) with > to display corect bonding descriptor
+        patt = RegExp(rBrakWidx.source,rBrakWidx.flags);
         BigSmilesStr = BigSmilesStr.replace(patt,'[>$2]');
         return BigSmilesStr;
       }
 
       function highlightStoObj2(BigSmilesStr){
-        var patt = RegExp(stoObjPatt.source,stoObjPatt.flags);
+        var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
         BigSmilesStr = matchAndReplace(patt,BigSmilesStr,function(x,match){
           return '<span class="redSpan">' + match[0] + '</span>';
         });
@@ -686,7 +706,7 @@
       }
 /*
       function cleanBigSmilesStr(BigSmilesStr){
-        var spanPatt = /\<\/?span( class\=\"[a-zA-Z0-9]*\")?\>/g;
+        var spanPatt = /\<\/?span( class\=\"[a-zA-Z0-9]*\")?\>/ig;
         BigSmilesStr = matchAndReplace(spanPatt,BigSmilesStr,function(x,match){
           return '';
         });
@@ -696,26 +716,26 @@
       function getBigSmilesObjStr(localDivElement,isNum=false,useNumbered=true) {
         //var localDivElement = element;
         var BigSmilesStr;
+        var patt;
         if(isNum == false) {
           BigSmilesStr = localDivElement.children(".PolymerSMILES").html();
-          var patt = RegExp(stoObjPatt.source,stoObjPatt.flags);
+          //var patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
+          patt = RegExp(stoObjWidx.source,stoObjWidx.flags);
         } else {
           if (useNumbered==true) {
             BigSmilesStr = localDivElement.children(".PolymerNumberedSMILES").html();
           } else {
             BigSmilesStr = localDivElement.children(".PolymerSMILES").html();
           }
-          var pattAtom = /\[([a-z0-9$\{\}\(\)]+)\:?([0-9\-\/]*)\]/ig;
+          var pattAtom = RegExp(anyAtomWaddress.source,anyAtomWaddress.flags);
           var address = localDivElement.children(".title").children(".address").html();
           BigSmilesStr = BigSmilesStr.replace(pattAtom,"[$1:"+address+"$2]");
-          var patt = /(\[\{Z\}\:?([0-9\-\/]*)\])/ig;
+          patt = RegExp(stoObjWaddress.source,stoObjWaddress.flags);
         }
 
-        // search raw string to change [$] into $, etc.
-        //BigSmilesStr = correctBondDesc(BigSmilesStr);
         // substitute the stochastic objects
         BigSmilesStr = matchAndReplace(patt,BigSmilesStr,function(x,match){
-          return getStoObjStr(localDivElement.children(".StoObj").eq(x-1),isNum);
+          return getStoObjStr(localDivElement.children(".StoObj").eq(x-1),isNum,useNumbered);
         });
         //alert(BigSmilesStr);
         if(BigSmilesStr==''){
@@ -726,7 +746,7 @@
         return BigSmilesStr;
       }
 
-      function getStoObjStr(localDivElement,isNum=false) {
+      function getStoObjStr(localDivElement,isNum=false,useNumbered) {
         //alert('stoObjCalled');
         //var localDivElement = element;
         var RepUnitElement = localDivElement.children(".RepeatUnit");
@@ -755,7 +775,7 @@
           if(i>0) {
             BigSmilesStr = BigSmilesStr + ',';
           }
-          BigSmilesStr = BigSmilesStr + getBigSmilesObjStr(RepUnitElement.children(".Polymer").eq(i),isNum);
+          BigSmilesStr = BigSmilesStr + getBigSmilesObjStr(RepUnitElement.children(".Polymer").eq(i),isNum,useNumbered);
         }
 
         if(nUnit==0){
@@ -773,7 +793,7 @@
           if(i>0) {
             BigSmilesStr = BigSmilesStr + ',';
           }
-          BigSmilesStr = BigSmilesStr + getBigSmilesObjStr(EndGrpElement.children(".Polymer").eq(i),isNum);
+          BigSmilesStr = BigSmilesStr + getBigSmilesObjStr(EndGrpElement.children(".Polymer").eq(i),isNum,useNumbered);
         }
         // get right bonding descriptor
         var rightDesc = localDivElement.children(".DescText").children(".rightDesc").val();
