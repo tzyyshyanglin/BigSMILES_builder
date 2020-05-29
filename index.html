@@ -12,25 +12,9 @@
     <link rel="shortcut icon" type="image/png" href="favicon.ico"/>
     <script src="jquery/jquery-3.4.1.min.js"></script>
     <script type="text/javascript" language="javascript" src="jsme/jsme.nocache.js"></script>
+    <script type="text/javascript" language="javascript" src="patterns.js"></script>
+    <script type="text/javascript" language="javascript" src="utility.js"></script>
     <script>
-    //this function will be called after the JavaScriptApplet code has been loaded.
-    function jsmeOnLoad() {
-      // initialize JSME editor with styrene repeat unit
-      //var startingStructure = "10 10 $ 10.30 -8.40 C 11.52 -7.70 C 12.73 -8.40 $ 13.94 -7.70 C 12.73 -9.80 C 11.52 -10.50 C 11.52 -11.90 C 12.73 -12.60 C 13.94 -11.90 C 13.94 -10.50 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2";
-    	//var startingStructure = "11 11 $ 8.61 -4.45 Z 9.83 -3.75 C 11.04 -4.45 (1 12.26 -3.75 C 11.04 -5.85 C 9.83 -6.55 C 9.83 -7.94 C 11.04 -8.64 C 12.26 -7.94 C 12.26 -6.55 )2 12.25 -5.15 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2 3 11 1";
-      var startingStructure = "7 6 C 4.44 -3.32 C 5.25 -3.79 C 5.25 -5.19 C 6.46 -5.89 {Z} 7.68 -5.19 C 8.89 -5.89 C 10.10 -5.19 1 2 1 2 3 1 3 4 1 4 5 1 5 6 1 6 7 1";
-    	//Instantiate a new JSME:
-    	//arguments: HTML id, width, height (must be string not number!)
-     	jsmeApplet = new JSApplet.JSME("appletContainer", "600px", "440px", {
-     		//optional parameters
-     		"options" : "number,noquery,hydrogens,multipart,autoez",
-     		"jme" : startingStructure
-     	});
-    	//One can mimic the JME Java applet access to simplify the adaptation of HTML and JavaScript code:
-    	document.JME = jsmeApplet;
-      jsmeApplet.setMolecularAreaScale(1.5);
-      jsmeApplet.setMenuScale(1.5);
-    }
     </script>
 
     <style>
@@ -39,19 +23,6 @@
       #JSMEcite {font-size: 14px;float:right;margin-right: 10px;}
       #displayPanel {top:0px;height:100%;position:fixed;border:1;padding: 10px;background: white;overflow: scroll;}
       #BigSMILEScontainer {width:650px;top: 0px;left:670px;position:relative;background: white;max-width:650px;}
-      #DataPanel {top:13px;left:50px;width:1200px;position:fixed;padding: 20px;
-                  background: white;overflow: scroll;display:none;
-                  border:outset black;border-width: 5px;}
-      #dataPolymer {width:650px;top: 0px;position:relative;background: none;max-width:650px;
-                    border:1px none;}
-      #DataClosePanel {float:right;width:30px;height:30px;background: white;display: block;
-                       position:relative;top:-1em;right:0px;margin-bottom: -1em;}
-      #DataClosePanel .close {position:fixed;color:#5e1225;}
-      #DataClosePanel .close:hover {cursor: pointer;color:red;}
-
-      #PrecursorBigSmiles {display: none;margin-bottom:10px;}
-
-      #appletContainer2 {position:fixed;left:650px;display:none;}
 
       .Polymer {border:1px none;max-width:650px;float:left;background: none;display:none;
                 margin-left:30px;position:relative;top:-10px;margin-top:15px;}
@@ -77,8 +48,11 @@
 
       .DescText {margin-left: 10px;}
       .DescText input {margin-left: 0px;margin-right:5px;}
+      .noEnds {display: none;}
       .leftEnd {display: none;}
       .rightEnd {display: none;}
+      .leftEndStr {margin-left:5px;margin-right:3px;}
+      .rightEndStr {margin-left:5px;margin-right:3px;}
 
       #rootPolymer {float:left;background: white;border:none;margin-top: 0px;margin-left:0px;display: block;}
       #rootPolymer h2 {margin-bottom:0.1em;margin-top: 0;}
@@ -133,7 +107,6 @@
         <button class="gen" type="button">Import from Editor</button>
         <button class="proj" type="button">Project to Editor</button>
         <button class="clear" type="button">Clear Polymer</button>
-        <button class="precursor" type="button">Export to Precursor Editor</button>
 
         <div class="PolymerColoredSMILES"></div>
         <div class="PolymerSMILES"></div>
@@ -146,9 +119,9 @@
       <div id="StoObjTemplate" class="StoObj">
         <h2 class="title">Stochastic Object: <span class="address">1</span><span class="StoObjName">1</span></h2>
         <span class="DescText">Bond Descriptors:
-          Left: <input type="text" size=4 class="leftDesc" />
-          Right: <input type="text" size=4 class="rightDesc" />
-          <span class="leftEnd">0</span><span class="rightEnd">0</span>
+          <span class="leftEndStr"> Left: </span><input type="text" size=4 class="leftDesc" />
+          <span class="rightEndStr"> Right: </span><input type="text" size=4 class="rightDesc" />
+          <span class="noEnds">0</span><span class="leftEnd">0</span><span class="rightEnd">0</span>
         </span>
         <div class="RepeatUnit">
           <h2>Repeat Units</h2>
@@ -165,11 +138,10 @@
       </div>
 
       <div id="rootPolymer" class="Polymer">
-        <h2 class="title">Base Polymer: <span class="address">/</span></h2>
+        <h2 class="title">Base Polymer: <span class="address"></span></h2>
         <button class="gen" type="button">Import from Editor</button>
         <button class="proj" type="button">Project to Editor</button>
         <button class="clear" type="button">Clear Polymer</button>
-        <button class="precursor" type="button">Export to Precursor Editor</button>
         <div class="PolymerColoredSMILES"></div>
         <div class="PolymerSMILES"></div>
         <div class="PolymerNumberedSMILES"></div>
@@ -180,40 +152,33 @@
 
     </div> <!-- BigSMILEScontainer -->
 
-    <div id="DataPanel">
-      <div id="DataClosePanel">
-        <div class="close">close</div>
-      </div>
-      <h2 class="title">Precursor Polymer Editor <button class="getStr">Precursor BigSMILES</button></h2>
-      <textarea id="PrecursorBigSmiles" class="textBox" cols="20" rows=3></textarea>
-      <div id="dataPolymer">
-
-      </div>
-      <div id="appletContainer2">
-      </div>
-    </div>
 
     <script>
-      var jsmeApplet2;
-      // regex patterns used
-      var stoObjWidx = /(\[\{[a-z0-9]+\}\:?([0-9]*)\])/ig;
-      var stoObjWaddress = /(\[\{[a-z0-9]+\}\:?([0-9\.\/]*)\])/ig;
-      var smilesCharPatt = /(\[(Cl|Br|[BCNOSPFIcbnosp])H?[0-9]?:?([0-9]*)\])/ig;
-      var anyAtomWaddress = /\[([a-z0-9$\+\-\@\{\}\(\)]+)\:?([0-9\.\/]*)\]/ig;
-      var anyJMEatomWidx = /[0-9a-z$\+\-\{\}\(\)\@]+\:([0-9]+)/ig;
-      var anyRegAtomWidx = /\[([a-z0-9\+\-\@]+):?[0-9]*\]/ig;
-      var lBrakWaddress = /\[([\(](\%[0-9][0-9]|[0-9])?)(:?)([0-9\.\/]*)\]/ig;
-      var lBrakWidx = /\[([\(](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/ig;
-      var rBrakWaddress = /\[([\)](\%[0-9][0-9]|[0-9])?)(:?)([0-9\.\/]*)\]/ig;
-      var rBrakWidx = /\[([\)](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/ig;
-      //var bondDesc = /\[([$<>][\-\=\/\\\#\:]?(\%[0-9][0-9]|[0-9])?)(\:[0-9]+)?\]/ig;
-      var bondDescPatt = /\[([$\(\)](\%[0-9][0-9]|[0-9])?):?([0-9]*)\]/ig;
+//      var startingStructure = "10 10 $ 10.30 -8.40 Z 11.52 -7.70 C 12.73 -8.40 $ 13.94 -7.70 C 12.73 -9.80 C 11.52 -10.50 C 11.52 -11.90 C 12.73 -12.60 C 13.94 -11.90 C 13.94 -10.50 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2";
 
-      var startingStructure = "10 10 $ 10.30 -8.40 Z 11.52 -7.70 C 12.73 -8.40 $ 13.94 -7.70 C 12.73 -9.80 C 11.52 -10.50 C 11.52 -11.90 C 12.73 -12.60 C 13.94 -11.90 C 13.94 -10.50 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2";
+      var folder_div = 'a';
+      var repunit_div = 'R';
+      var endgrp_div = 'E';
 
-      var folder_div = '/';
-      var repunit_div = '.';
-      var endgrp_div = '.E';
+      //this function will be called after the JavaScriptApplet code has been loaded.
+      function jsmeOnLoad() {
+        // initialize JSME editor with styrene repeat unit
+        //var startingStructure = "10 10 $ 10.30 -8.40 C 11.52 -7.70 C 12.73 -8.40 $ 13.94 -7.70 C 12.73 -9.80 C 11.52 -10.50 C 11.52 -11.90 C 12.73 -12.60 C 13.94 -11.90 C 13.94 -10.50 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2";
+      	//var startingStructure = "11 11 $ 8.61 -4.45 Z 9.83 -3.75 C 11.04 -4.45 (1 12.26 -3.75 C 11.04 -5.85 C 9.83 -6.55 C 9.83 -7.94 C 11.04 -8.64 C 12.26 -7.94 C 12.26 -6.55 )2 12.25 -5.15 1 2 1 2 3 1 3 4 1 3 5 1 6 7 1 7 8 2 8 9 1 9 10 2 5 10 1 5 6 2 3 11 1";
+        //var startingStructure = "7 6 C 4.44 -3.32 C 5.25 -3.79 C 5.25 -5.19 C 6.46 -5.89 {Z} 7.68 -5.19 C 8.89 -5.89 C 10.10 -5.19 1 2 1 2 3 1 3 4 1 4 5 1 5 6 1 6 7 1";
+        var startingStructure = "2 1 {Z} 5.25 -3.79 < 5.25 -5.19 1 2 1";
+      	//Instantiate a new JSME:
+      	//arguments: HTML id, width, height (must be string not number!)
+       	jsmeApplet = new JSApplet.JSME("appletContainer", "600px", "440px", {
+       		//optional parameters
+       		"options" : "number,noquery,hydrogens,multipart,autoez",
+       		"jme" : startingStructure
+       	});
+      	//One can mimic the JME Java applet access to simplify the adaptation of HTML and JavaScript code:
+      	document.JME = jsmeApplet;
+        jsmeApplet.setMolecularAreaScale(1.5);
+        jsmeApplet.setMenuScale(1.5);
+      }
 
       // remove last repeat unit
       $( "#BigSMILEScontainer" ).on("click",'.delUnit',function( event ) {
@@ -235,10 +200,10 @@
         var unitIdx = parseInt(divElement.children(".count").html())+1;
         divElement.children(".count").html(String(unitIdx));
         if($(this).html() == "Add Repeat Unit") {
-          newIdx = divElement.parent().children().children(".address").html()+repunit_div+String(unitIdx)+folder_div;
+          newIdx = divElement.parent().children().children(".address").html()+repunit_div+String(unitIdx);
         }
         else {
-          newIdx = divElement.parent().children().children(".address").html()+endgrp_div+String(unitIdx)+folder_div;
+          newIdx = divElement.parent().children().children(".address").html()+endgrp_div+String(unitIdx);
         }
 
         newElement = $("#PolymerTemplate").clone();
@@ -255,22 +220,49 @@
         clearPolymer(divElement);
         // get representation from JSME editor
         //var smilesStr = correctBondDesc(document.JME.smiles());
+
+        // get the svg file for labelled structure
+        // read JME string for atom label manipulation
         var jmeStr = document.JME.jmeFile();
         var smilesStr = document.JME.smiles();
-        var jmeNumStr = numberAtoms(jmeStr);
+        var molFileStr = document.JME.molFile();
+        //alert(molFileStr);
+        // escape ">" with ")" to avoid JSME parsing issues
+        jmeStr = matchAndReplace(/>/ig,jmeStr,function(x,match){
+          return ")";
+        });
+        // add labels to the jmeStr
+        var jmeNumStr = numberAtoms(jmeStr,divElement.children(".title").children(".address").html());
+        // export labelled structure to JSME app
         jsmeApplet.readMolecule(jmeNumStr);
+        // re-read the labelled MolFile
+        var molFileNumStr = document.JME.molFile();
+        jmeNumStr = document.JME.jmeFile(); // trim the leading zeros on the padded labels
+        //alert(molFileNumStr);
+        // un-escape ")" with ">" to avoid JSME parsing issues
+        molFileNumStr = matchAndReplace(/\)/ig,molFileNumStr,function(x,match){
+          return ">";
+        });
+        //alert(molFileNumStr);
+        // then re-export the labelled string to JSME again to get the labelled figure
+        jsmeApplet.readMolFile(molFileNumStr);
+        //alert(molFileNumStr);
         var smilesNumStr = document.JME.smiles();
-        divElement.children(".PolymerHidden").html(jmeStr);
-        divElement.children(".PolymerNumberedHidden").html(jmeNumStr);
+        //alert(smilesNumStr);
+        // render svg figure with labels
         var svgStr = jsmeApplet.getMolecularAreaGraphicsString();
         divElement.children(".PolymerSVG").html(svgStr);
-        jsmeApplet.readMolecule(jmeStr);
+        // finally, re-export the unlabelled string to JSME
+        jsmeApplet.readMolFile(molFileStr);
 
-
+        // save the escaped strings for later use
+        divElement.children(".PolymerHidden").html(jmeStr);
+        divElement.children(".PolymerNumberedHidden").html(jmeNumStr);
         var highlightSmilesStr = highlightStoObj(smilesNumStr);
         divElement.children(".PolymerSMILES").html(smilesStr);
         divElement.children(".PolymerColoredSMILES").html(highlightSmilesStr);
         divElement.children(".PolymerNumberedSMILES").html(smilesNumStr);
+
         // automatically generate child stochastic objects
         var stoObjCount = 0;
         var match, newIdx, newElement, stoObjIdx;
@@ -281,30 +273,39 @@
           // make new object visible
           newElement.css("display","block");
           // assign address
-          stoObjIdx = match[2];
-          newIdx = divElement.find(".address").html() + stoObjIdx;
+          stoObjIdx = match[3];
+          if(divElement.attr('id') == 'rootPolymer'){
+              newIdx = divElement.find(".address").html() + stoObjIdx;
+          } else {
+            newIdx = divElement.find(".address").html() + folder_div + stoObjIdx;
+          }
           newElement.find(".address").html(newIdx);
           newElement.find(".StoObjName").html(match[0]);
-/*
-          // check if StoObj is on left terminal
-          if(match.index == 0) {
-            newElement.children(".DescText").children(".leftEnd").html("1");
-          } else {
-            if(smilesStr.charAt(match.index-1)=='.') {
-              newElement.children(".DescText").children(".leftEnd").html("1");
-            }
-          }
-          // check if StoObj is on right terminal
-          var rightIdx = match.index + match[0].length;
-          if(rightIdx == smilesStr.length) {
-            newElement.children(".DescText").children(".rightEnd").html("1");
-          } else {
-            if(smilesStr.charAt(rightIdx)=='.' || smilesStr.charAt(rightIdx)==')') {
-              newElement.children(".DescText").children(".rightEnd").html("1");
-            }
-          }
-*/
+
           newElement.appendTo(divElement);
+
+          neighArr = getStoObjEnd(match[2]+':'+match[3],jmeNumStr);
+          //alert(neighArr.length);
+          newElement.find(".noEnds").html(String(neighArr.length));
+          var neighIdx = [];
+          for(var k=0;k<neighArr.length;k++){
+            neighIdx.push(smilesNumStr.indexOf(neighArr[k]));
+          }
+          //alert(sortWithIndices(neighIdx).sortIndices[0]);
+          var neighOrder = sortWithIndices(neighIdx).sortIndices;
+          if(neighIdx.length > 0)
+            newElement.find(".leftEndStr").html("connection to "+neighArr[neighOrder[0]]);
+          if(neighIdx.length > 1)
+            newElement.find(".rightEndStr").html("connection to "+neighArr[neighOrder[1]]);
+          else {
+            newElement.find(".rightEndStr").html("the other connection ");
+          }
+          /*
+          if(neighIdx.length > 2){
+            var msg = "Warning: Stochastic Object \"" + localDivElement.children(".title").children(".address").html() + "\" is missing left bonding descriptor!";
+            $("#ErrMsg").val( $("#ErrMsg").val() + msg + "\n" );
+          }
+          */
         }
       });
 
@@ -312,7 +313,19 @@
       $( "#BigSMILEScontainer" ).on("click",".proj",function( event ){
         // project molecular fragment to JSME editor
         var jme = $(this).parent().children(".PolymerHidden").html();
+
+        // export JME string to JSME
+        jme = matchAndReplace(/&lt;/ig,jme,function(x,match){
+          return "<";
+        });
         jsmeApplet.readMolecule(jme);
+
+        // following code is to unescape ")" in JME string into ">"
+        var molFileStr = document.JME.molFile();
+        molFileStr = matchAndReplace(/\)/ig,molFileStr,function(x,match){
+          return ">";
+        });
+        jsmeApplet.readMolFile(molFileStr);
       });
 
       // clear polymer
@@ -320,335 +333,6 @@
         // project molecular fragment to JSME editor
         var divElement = $(this).parent();
         clearPolymer(divElement);
-      });
-
-      function numberAtoms(jmeStr) {
-        arrs = jmeStr.split("|");
-        var atomCount=0;
-        var arr;
-        for(var j=0;j<arrs.length;j++) {
-          arr = arrs[j].split(" ");
-          var nAtom = parseInt(arr[0]);
-          var nBond = parseInt(arr[1]);
-          var idx;
-          for(var i=0;i<nAtom;i++) {
-            atomCount++;
-            idx = 2 + i*3;
-            arr[idx] = arr[idx] + ':' + String(atomCount);
-          }
-          arrs[j] = arr.join(' ');
-        }
-        return arrs.join('|');
-      }
-
-      function numberNewAtoms(jmeStr,startN) {
-        arrs = jmeStr.split("|");
-        var atomCount=startN;
-        var arr;
-        // first pass, get largest existing label
-        for(var j=0;j<arrs.length;j++) {
-          arr = arrs[j].split(" ");
-          var nAtom = parseInt(arr[0]);
-          var idx;
-          for(var i=0;i<nAtom;i++) {
-            idx = 2 + i*3;
-            var patt = new RegExp(anyJMEatomWidx.source,anyJMEatomWidx.flags);
-            if(patt.test(arr[idx])) {
-              patt = new RegExp(anyJMEatomWidx.source,anyJMEatomWidx.flags);
-              var match = patt.exec(arr[idx]);
-              if (parseInt(match[1])>atomCount) {
-                atomCount = parseInt(match[1]);
-              }
-            } else {
-              // no label
-            }
-          }
-        }
-        // second pass, assign labels to unlabelled atoms
-        for(var j=0;j<arrs.length;j++) {
-          arr = arrs[j].split(" ");
-          var nAtom = parseInt(arr[0]);
-          var idx;
-          for(var i=0;i<nAtom;i++) {
-            idx = 2 + i*3;
-            var patt = new RegExp(anyJMEatomWidx.source,anyJMEatomWidx.flags);
-            if(patt.test(arr[idx])) {
-              // if match found, no need to update
-            } else {
-              atomCount++;
-              arr[idx] = arr[idx] + ':' + String(atomCount);
-            }
-          }
-          arrs[j] = arr.join(' ');
-        }
-        return arrs.join('|');
-      }
-
-      function clearPolymer(divElement){
-        divElement.children(".PolymerColoredSMILES").html("");
-        divElement.children(".PolymerSMILES").html("");
-        divElement.children(".PolymerNumberedSMILES").html("");
-        divElement.children(".PolymerHidden").html("");
-        divElement.children(".PolymerNumberedHidden").html("");
-        divElement.children(".PolymerSVG").html("");
-        divElement.children(".StoObj").remove();
-        divElement.children(".Polymer").remove();
-        //jsmeApplet.clear();
-      }
-
-      // project to precursor editor
-      $( "#BigSMILEScontainer" ).on("click",".precursor",function( event ){
-        elementToClone = $(this).parent();
-        initializeDataWindow(newElement);
-        var dataWindow = $("#dataPolymer");
-        var newElement = elementToClone.clone();
-        prepareNewElement(newElement);
-        newElement.appendTo(dataWindow);
-      });
-
-      function initializeDataWindow() {
-        var dataElement = $("#DataPanel");
-        dataElement.css("height",$(window).height()-80);
-        dataElement.css("display","block");
-        $("appletContainer2").css("display",'none');
-        jsmeApplet2 = new JSApplet.JSME("appletContainer2", "600px", "440px", {
-           //optional parameters
-           "options" : "number,noquery,hydrogens,multipart,autoez"
-         });
-        jsmeApplet2.options("nodepict");
-        jsmeApplet2.setMolecularAreaScale(1.5);
-        jsmeApplet2.setMenuScale(1.5);
-      }
-
-      function prepareNewElement(newElement) {
-        newElement.css("display","block");
-        newElement.css("margin-left",0);
-        var address = newElement.children(".title").children(".address").html();
-        newElement.children(".title").html('Base BigSMILES Unit: <span class="address">'+address+'</span>');
-        modifyButtons(newElement);
-        modifySMILES_JME(newElement);
-        modifyUnits(newElement);
-      }
-
-      function modifySMILES_JME(newElement) {
-        var element=newElement.find(".PolymerColoredSMILES");
-        for(var i=0;i<element.length;i++) {
-          var currElement = element.eq(i).parent();
-          var NumberedSMILES = currElement.children(".PolymerNumberedSMILES").html();
-          var NumberedJME = currElement.children(".PolymerNumberedHidden").html();
-          var PolymerSMILES = currElement.children(".PolymerSMILES");
-          var PolymerHidden = currElement.children(".PolymerHidden");
-          var ColorSMILES = currElement.children(".PolymerColoredSMILES");
-          ColorSMILES.html(highlightStoObj(NumberedSMILES));
-          PolymerSMILES.html(NumberedSMILES);
-          PolymerHidden.html(NumberedJME);
-        }
-      }
-
-      function modifyUnits(newElement) {
-        var repUnits=newElement.find(".RepeatUnit");
-        for(var i=0;i<repUnits.length;i++) {
-          var unitCount = parseInt(repUnits.eq(i).children(".count").html());
-          repUnits.eq(i).append('<div class="hiddenCount">'+String(unitCount)+'</div>');
-        }
-        var endGroups=newElement.find(".EndGroup");
-        for(var i=0;i<endGroups.length;i++) {
-          //var unitCount = parseInt(endGroups.eq(i).children(".count").html());
-          endGroups.eq(i).append('<div class="hiddenCount">'+String(0)+'</div>');
-        }
-      }
-
-      function modifyButtons(element){
-        element.find(".gen").html("Modify");
-        element.find(".proj").html("Done Modifying");
-        element.find(".proj").css('display','none');
-        element.find(".clear").html("Cancel Modification");
-        element.find(".clear").css('display','none');
-        element.find(".precursor").css('display','none');
-      }
-
-      $( "#DataPanel" ).on("click",'.getStr',function( event ) {
-        // toggle visibility
-        var element = $("#PrecursorBigSmiles");
-        if (element.css("display")=='block') {
-          //element.css("display",'none');
-        } else{
-          element.css("display",'block');
-        }
-
-        $("#PrecursorBigSmiles").val('');
-        element = $("#dataPolymer").children(".Polymer");
-        // get BigSmiles string
-        var isNum=true;
-        var stringToShow = getBigSmilesObjStr(element,isNum,false);
-        subParenToBrak(stringToShow,isNum);
-        $("#PrecursorBigSmiles").val(stringToShow);
-      });
-
-      $( "#DataPanel" ).on("click",'.gen',function( event ) {
-        // get container
-        var divElement = $(this).parent();
-        $("#appletContainer2").css('display','block');
-        divElement.children(".proj").css('display','inline');
-        divElement.children(".clear").css('display','inline');
-        if(divElement.children(".PolymerHidden").html() != ''){
-          jsmeApplet2.readMolecule(divElement.children(".PolymerHidden").html());
-        } else {
-          jsmeApplet2.reset();
-        }
-
-      });
-
-      $( "#DataPanel" ).on("click",'.proj',function( event ) {
-        // get container
-        var divElement = $(this).parent();
-        $("#appletContainer2").css('display','none');
-        $(this).css('display','none');
-        $(this).parent().children(".clear").css('display','none');
-        modifyStoObj(divElement);
-      });
-
-      $( "#DataClosePanel" ).on("click", ".close",function( event ){
-         clearData();
-         var dataElement = $("#DataPanel");
-         dataElement.css("display","none");
-      });
-
-      $( "#DataPanel" ).on("click",'.clear',function( event ) {
-        // get container
-        $("#appletContainer2").css('display','none');
-        $(this).css('display','none');
-        $(this).parent().children(".proj").css('display','none');
-      });
-
-      function modifyStoObj(divElement) {
-
-        // compute the number of atoms in original molecule
-        var nAtomOrig = 0;
-        var OrigJmeStr = divElement.children(".PolymerNumberedHidden").html();
-        if (OrigJmeStr != '') {
-          arrs = OrigJmeStr.split("|");
-          var arr;
-          for(var j=0;j<arrs.length;j++) {
-            arr = arrs[j].split(" ");
-            var nAtom = parseInt(arr[0]);
-            nAtomOrig = nAtomOrig + nAtom;
-          }
-        }
-
-        // remove all deprecated objects from the DOM tree
-        var match, newIdx, newElement, stoObjIdx;
-        var allArr=[],existArr = [];
-        // collect all StoObj
-        var children=divElement.children('.StoObj');
-        for(var i=0;i<children.length;i++) {
-          var matchIdx = children.eq(i).children('.title').children('.address').html();
-          allArr.push(matchIdx);
-        }
-
-        // get StoObj that are still present
-        var smilesNumStr = jsmeApplet2.smiles();
-        var patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
-        while(match = patt.exec(smilesNumStr) ) {
-          stoObjIdx = match[2];
-          var matchIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
-          if (allArr.includes(matchIdx)) {
-            existArr.push(matchIdx);
-          }
-        }
-
-        // remove StoObj from the DOM
-        var children=divElement.children('.StoObj');
-        for(var i=0;i<children.length;i++) {
-          var matchIdx = children.eq(i).children('.title').children('.address').html();
-          if (existArr.includes(matchIdx)) {
-            // preserve the ones that still exist
-          } else {
-            children.eq(i).remove();
-          }
-        }
-
-        var jmeStr = jsmeApplet2.jmeFile();
-        jmeNumStr = numberNewAtoms(jmeStr,nAtomOrig);
-        jsmeApplet2.readMolecule(jmeNumStr);
-        var svgStr = jsmeApplet2.getMolecularAreaGraphicsString();
-        var smilesNumStr = jsmeApplet2.smiles();
-        divElement.children(".PolymerHidden").html(jmeNumStr);
-        divElement.children(".PolymerSVG").html(svgStr);
-        divElement.children(".PolymerSMILES").html(smilesNumStr);
-        divElement.children(".PolymerColoredSMILES").html(highlightStoObj(smilesNumStr));
-
-        //
-
-        // add new StoObj to the DOM tree
-        var patt2 = new RegExp(stoObjWidx.source,stoObjWidx.flags);
-        //var newStoObjCount = ;
-        while(match = patt2.exec(smilesNumStr) ) {
-          stoObjIdx = parseInt(match[2]);
-          if (stoObjIdx <= nAtomOrig) {
-            continue;
-          } else {
-            var matchIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
-            if (existArr.includes(matchIdx)) {
-              // if the "new" element already exists, do nothing but rename
-              newElement = divElement.children(".StoObj").children(":contains('"+matchIdx+"')").parent();
-              newElement.find(".StoObjName").html(match[0]);
-            } else {
-              // create new element
-              newElement = $("#StoObjTemplate").clone();
-              newElement.css("display","block");
-              newIdx = divElement.children(".title").children(".address").html() + stoObjIdx;
-              newElement.find(".address").html(newIdx);
-              newElement.find(".StoObjName").html(match[0]);
-              modifyUnits(newElement);
-              newElement.appendTo(divElement);
-            }
-          }
-        }
-      }
-
-      function clearData(){
-        var dataWindow = $("#dataPolymer");
-        dataWindow.children("div").remove();
-        $("#appletContainer2").find('*').remove();
-      }
-
-      // remove last repeat unit
-      $( "#DataPanel" ).on("click",'.delUnit',function( event ) {
-        var divElement = $(this).parent();
-        var unitIdx = parseInt(divElement.children(".count").html());
-        if(unitIdx > parseInt(divElement.children(".hiddenCount").html())) {
-          // remove element
-          divElement.children(".Polymer").eq(unitIdx-1).remove();
-          // reset counter
-          divElement.children(".count").html(String(unitIdx-1));
-        } else {
-          return;
-        }
-      });
-
-      // create new repeat unit
-      $( "#DataPanel" ).on("click",'.addUnit',function( event ) {
-        var divElement = $(this).parent();
-        var unitIdx = parseInt(divElement.children(".count").html())+1;
-        if(unitIdx > parseInt(divElement.children(".hiddenCount").html())) {
-          // everything good
-        } else {
-          unitIdx = parseInt(divElement.children(".hiddenCount").html())+1;
-        }
-        divElement.children(".count").html(String(unitIdx));
-        if($(this).html() == "Add Repeat Unit") {
-          newIdx = divElement.parent().children().children(".address").html()+repunit_div+String(unitIdx)+folder_div;
-        }
-        else {
-          newIdx = divElement.parent().children().children(".address").html()+endgrp_div+String(unitIdx)+folder_div;
-        }
-
-        newElement = $("#PolymerTemplate").clone();
-        newElement.css("display","block");
-        modifyButtons(newElement);
-        newElement.children().children(".address").html(newIdx);
-        newElement.appendTo(divElement);
       });
 
 
@@ -665,182 +349,10 @@
           isNum = true;
         }
         var stringToShow = getBigSmilesObjStr(element,isNum);
-        stringToShow = subParenToBrak(stringToShow,isNum);
+        stringToShow = escapeHTMLBrak(stringToShow,isNum);
         $("#BigSmiles").val(stringToShow);
       });
 
-      function subParenToBrak(stringToShow,isNum) {
-        var pattL = new RegExp(lBrakWaddress.source,lBrakWaddress.flags);
-        var pattR = new RegExp(rBrakWaddress.source,rBrakWaddress.flags);
-        if(!isNum) {
-          stringToShow = stringToShow.replace(pattL,'[<$2]');
-          stringToShow = stringToShow.replace(pattR,'[>$2]');
-        } else {
-          stringToShow = stringToShow.replace(pattL,'[<$2$3$4]');
-          stringToShow = stringToShow.replace(pattR,'[>$2$3$4]');
-        }
-        return stringToShow
-      }
-
-      function matchAndReplace(patt,BigSmilesStr,func){
-        var n=0;
-        var match, indices = [];
-        var repStrs = [];
-        while(match = patt.exec(BigSmilesStr) ) {
-          n++;
-          indices.push([match.index, match.index+match[0].length]);
-          repStrs.push(func(n,match));
-        }
-        var i;
-        for(i=n-1;i>=0;i--) {
-          BigSmilesStr = BigSmilesStr.substr(0,indices[i][0]) + repStrs[i] + BigSmilesStr.substr(indices[i][1],BigSmilesStr.length+1);
-        }
-        return BigSmilesStr;
-      }
-
-      function correctBondDesc(BigSmilesStr){
-        BigSmilesStr = matchAndReplace(bondDescPatt,BigSmilesStr,function(x,match){
-          return match[1];
-        });
-        return BigSmilesStr;
-      }
-
-      function highlightStoObj(BigSmilesStr){
-        var patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
-        BigSmilesStr = BigSmilesStr.replace(patt,'<span class="redSpan">$1</span>');
-        patt = new RegExp(smilesCharPatt.source,smilesCharPatt.flags);
-        BigSmilesStr = BigSmilesStr.replace(patt,'$2');
-        patt = new RegExp(bondDescPatt.source,bondDescPatt.flags);
-        BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
-        // remove atom idx from smiles string
-        patt = new RegExp(anyRegAtomWidx.source,anyRegAtomWidx.flags);
-        BigSmilesStr = BigSmilesStr.replace(patt,'[$1]');
-        // replace ( with < to display corect bonding descriptor
-        patt = new RegExp(lBrakWidx.source,lBrakWidx.flags);
-        BigSmilesStr = BigSmilesStr.replace(patt,'[<$2]');
-        // replace ) with > to display corect bonding descriptor
-        patt = new RegExp(rBrakWidx.source,rBrakWidx.flags);
-        BigSmilesStr = BigSmilesStr.replace(patt,'[>$2]');
-        return BigSmilesStr;
-      }
-
-      function highlightStoObj2(BigSmilesStr){
-        var patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
-        BigSmilesStr = matchAndReplace(patt,BigSmilesStr,function(x,match){
-          return '<span class="redSpan">' + match[0] + '</span>';
-        });
-        return BigSmilesStr;
-      }
-/*
-      function cleanBigSmilesStr(BigSmilesStr){
-        var spanPatt = /\<\/?span( class\=\"[a-zA-Z0-9]*\")?\>/ig;
-        BigSmilesStr = matchAndReplace(spanPatt,BigSmilesStr,function(x,match){
-          return '';
-        });
-        return BigSmilesStr;
-      }
-*/
-      function getBigSmilesObjStr(localDivElement,isNum=false,useNumbered=true) {
-        //var localDivElement = element;
-        var BigSmilesStr;
-        var patt;
-        if(isNum == false) {
-          BigSmilesStr = localDivElement.children(".PolymerSMILES").html();
-          patt = new RegExp(stoObjWidx.source,stoObjWidx.flags);
-        } else {
-          if (useNumbered==true) {
-            BigSmilesStr = localDivElement.children(".PolymerNumberedSMILES").html();
-          } else {
-            BigSmilesStr = localDivElement.children(".PolymerSMILES").html();
-          }
-          var pattAtom = new RegExp(anyAtomWaddress.source,anyAtomWaddress.flags);
-          var address = localDivElement.children(".title").children(".address").html();
-          BigSmilesStr = BigSmilesStr.replace(pattAtom,"[$1:"+address+"$2]");
-          patt = new RegExp(stoObjWaddress.source,stoObjWaddress.flags);
-        }
-
-        // substitute the stochastic objects
-        BigSmilesStr = matchAndReplace(patt,BigSmilesStr,function(x,match){
-          return getStoObjStr(localDivElement.children(".StoObj").eq(x-1),isNum,useNumbered);
-        });
-        //alert(BigSmilesStr);
-        if(BigSmilesStr==''){
-          // complain if BigSmilesStr is empty
-          var msg = "Warning: BigSMILES Unit    \"" + localDivElement.children(".title").children(".address").html() + "\" is empty!";
-          $("#ErrMsg").val( $("#ErrMsg").val() + msg + "\n" );
-        }
-        return BigSmilesStr;
-      }
-
-      function getStoObjStr(localDivElement,isNum=false,useNumbered) {
-        //alert('stoObjCalled');
-        //var localDivElement = element;
-        var RepUnitElement = localDivElement.children(".RepeatUnit");
-        var EndGrpElement = localDivElement.children(".EndGroup");
-        var BigSmilesStr = "{";
-        // get left bonding descriptor
-        var leftDesc = localDivElement.children(".DescText").children(".leftDesc").val();
-        if(leftDesc=="") {
-          //if(localDivElement.children(".DescText").children(".leftEnd")=='1'){
-            // StoObj is left terminal, so possibly no left bond desc
-          //} else {
-            // StoObj is not left terminal, left bond desc must be present
-            var msg = "Warning: Stochastic Object \"" + localDivElement.children(".title").children(".address").html() + "\" is missing left bonding descriptor!";
-            $("#ErrMsg").val( $("#ErrMsg").val() + msg + "\n" );
-            //alert(msg);
-          //}
-          BigSmilesStr = BigSmilesStr + "[]"
-        } else {
-          BigSmilesStr = BigSmilesStr + "[" + leftDesc + "]"
-        }
-        // get all repeat units
-        var nUnit = parseInt(RepUnitElement.children(".count").html());
-        //alert(element.prop("tagName"));
-        var i;
-        for(i=0;i<nUnit;i++) {
-          if(i>0) {
-            BigSmilesStr = BigSmilesStr + ',';
-          }
-          BigSmilesStr = BigSmilesStr + getBigSmilesObjStr(RepUnitElement.children(".Polymer").eq(i),isNum,useNumbered);
-        }
-
-        if(nUnit==0){
-          // complain if repeat unit list is empty
-          var msg = "Warning: Stochastic Object \"" + localDivElement.children(".title").children(".address").html() + "\" contains no repeat unit!";
-          $("#ErrMsg").val( $("#ErrMsg").val() + msg + "\n" );
-        }
-
-        // get all end groups
-        var nEnd = parseInt(EndGrpElement.children(".count").html());
-        if(nEnd>0) {
-          BigSmilesStr = BigSmilesStr + ';';
-        }
-        for(i=0;i<nEnd;i++) {
-          if(i>0) {
-            BigSmilesStr = BigSmilesStr + ',';
-          }
-          BigSmilesStr = BigSmilesStr + getBigSmilesObjStr(EndGrpElement.children(".Polymer").eq(i),isNum,useNumbered);
-        }
-        // get right bonding descriptor
-        var rightDesc = localDivElement.children(".DescText").children(".rightDesc").val();
-        if(rightDesc=="") {
-          //if(localDivElement.children(".DescText").children(".rightEnd")=='1'){
-            // StoObj is right terminal, so possibly no right bond desc
-          //} else {
-            // StoObj is not right terminal, right bond desc must be present
-            var msg = "Warning: Stochastic Object \"" + localDivElement.children(".title").children(".address").html() + "\" is missing right bonding descriptor!";
-            $("#ErrMsg").val( $("#ErrMsg").val() +  msg + "\n");
-            //alert(msg);
-          //}
-          BigSmilesStr = BigSmilesStr + "[]"
-        } else {
-          BigSmilesStr = BigSmilesStr + "[" + rightDesc + "]"
-        }
-
-        BigSmilesStr = BigSmilesStr + '}';
-
-        return BigSmilesStr;
-      }
 
 
     </script>
